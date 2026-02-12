@@ -39,18 +39,13 @@ def main():
     if os.path.exists(os.path.join(base_path, "setup.py")):
         run_command(f"pip install -e {base_path}")
     else:
-        print("⚠️ Warning: setup.py not found, trying pip install anyway...")
-        run_command(f"pip install {base_path}")
+        print("⚠️ Warning: setup.py not found, trying editable install anyway...")
+        run_command(f"pip install -e {base_path}")
 
-    # 3. Install performance backends
-    print("\n📦 Installing performance backends (vLLM, LMDeploy)...")
-    run_command("pip install vllm>=0.6.3 --no-build-isolation")
-    run_command("pip install lmdeploy")
-    run_command("pip install qwen-vl-utils decord")
-    
-    # Flash attention is optional and may fail on some systems
+    # 3. Optional: Install Flash Attention (may fail on some systems)
     print("\n📦 Installing Flash Attention (optional, may fail)...")
     run_command("pip install flash-attn --no-build-isolation || echo 'Flash Attention install failed, continuing anyway'")
+
 
     # 4. Create .env file
     google_key = os.environ.get("GOOGLE_API_KEY", "")
