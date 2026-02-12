@@ -63,9 +63,9 @@ GOOGLE_API_KEY={google_key}
     print("Then, verify your Gemini connection:")
     print("!python verify_gemini.py")
     print("----------------------------------------------------------------")
-    print("Finally, run your evaluation (GeminiFlash2-0 is a good cheap judge):")
+    print("Finally, run your evaluation (GeminiFlashLite2-0 is a great cheap judge):")
     # Note: User changed default model in run_vlm.py to qwen2_vl_7b_instruct and data to DynaMath
-    print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose --judge GeminiFlash2-0")
+    print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose --judge GeminiFlashLite2-0")
 
 if __name__ == "__main__":
     main()

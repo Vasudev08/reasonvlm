@@ -30,30 +30,59 @@ def diagnose_gemini():
         api_key = api_key.strip()
         os.environ["GOOGLE_API_KEY"] = api_key
 
-    # 2. Raw CURL test (Bypass all libraries)
-    print("\nAttempting Raw JSON POST (Direct to Google API)...")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-    headers = {'Content-Type': 'application/json'}
-    payload = {
-        "contents": [{"parts": [{"text": "Hello"}]}]
-    }
-    
+    # 2. Raw Model Listing (Check what is actually available)
+    print("\nAttempting to List Models (Check permissions)...")
+    list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
-        if response.status_code == 200:
-            print("✅ Raw API Success!")
-            print("The issue is likely in the VLMEvalKit configuration or 'google-genai' library.")
+        list_resp = requests.get(list_url, timeout=10)
+        if list_resp.status_code == 200:
+            print("✅ Successfully listed models!")
+            models_data = list_resp.json().get('models', [])
+            print(f"Your key has access to {len(models_data)} models.")
+            # Print first 5 models
+            for m in models_data[:5]:
+                print(f" - {m.get('name')}")
         else:
-            print(f"❌ Raw API Failure (Status: {response.status_code})")
-            print(f"Response: {response.text}")
-            if "API_KEY_INVALID" in response.text:
-                print("\nGoogle STILL says this key is invalid.")
-                print("Things to check:")
-                print("1. Did you copy the key correctly from AI Studio?")
-                print("2. Is the key enabled for 'Gemini API' (Standard tier)?")
-                print("3. Are there any spaces in your copy-paste?")
+            print(f"❌ Failed to list models (Status: {list_resp.status_code})")
+            print(f"Response: {list_resp.text}")
     except Exception as e:
-        print(f"❌ Connection Error: {e}")
+        print(f"❌ Error listing models: {e}")
+
+    # 3. Raw CURL test (Try v1 and v1beta)
+    for version in ["v1", "v1beta"]:
+        print(f"\nAttempting Raw JSON POST (Direct to Google API {version})...")
+        # Testing Gemini 1.5 and 2.0 (Flash and Lite)
+        candidate_models = [
+            "gemini-2.0-flash-lite",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest"
+        ]
+        
+        for model_id in candidate_models:
+            url = f"https://generativelanguage.googleapis.com/{version}/models/{model_id}:generateContent?key={api_key}"
+            headers = {'Content-Type': 'application/json'}
+            payload = {
+                "contents": [{"parts": [{"text": "Hello"}]}]
+            }
+            
+            try:
+                response = requests.post(url, headers=headers, json=payload, timeout=10)
+                if response.status_code == 200:
+                    print(f"✅ Raw API Success ({version}, {model_id})!")
+                    break
+                else:
+                    # Don't spam 404s, just report other errors
+                    if response.status_code != 404:
+                         print(f"❌ Raw API Failure ({version}, {model_id}) (Status: {response.status_code})")
+                         print(f"Response: {response.text}")
+                    else:
+                         print(f"   - {model_id} ({version}): 404 Not Found")
+            except Exception as e:
+                print(f"❌ Connection Error ({version}, {model_id}): {e}")
+        else:
+            continue
+        break
 
     # 3. VLMEvalKit Wrapper Test
     print("\nTesting via VLMEvalKit Wrapper...")
