@@ -39,40 +39,46 @@ def main():
         print("\n🔄 VLMEvalKit appears to be a submodule. Initializing...")
         run_command("git submodule update --init --recursive")
     
-    # 3. Install VLMEvalKit
+    # 3. Install VLMEvalKit (The core package)
     print("\n📦 Installing VLMEvalKit...")
     if os.path.exists(os.path.join(base_path, "setup.py")):
         run_command(f"pip install -e {base_path}")
     else:
-        print("❌ Error: setup.py still not found after submodule initialization.")
-        print("   Please check that VLMEvalKit was cloned/initialized correctly.")
+        print("❌ Error: setup.py still not found.")
         return
 
+    # 4. Fix Transformers (required for Qwen2-VL)
+    print("\n📦 Fixing transformers version...")
+    run_command("pip uninstall transformers -y")
+    run_command("pip install transformers==4.47.0")
+    
+    # 5. Optional backend (Flash Attention)
+    print("\n📦 Installing Flash Attention (optional)...")
+    run_command("pip install flash-attn --no-build-isolation || echo 'Flash Attention skip'")
 
-    # 3. Optional: Install Flash Attention (may fail on some systems)
-    print("\n📦 Installing Flash Attention (optional, may fail)...")
-    run_command("pip install flash-attn --no-build-isolation || echo 'Flash Attention install failed, continuing anyway'")
 
-
-    # 4. Create .env file
+    # 5. Create .env file
     google_key = os.environ.get("GOOGLE_API_KEY", "")
     openai_key = os.environ.get("OPENAI_API_KEY", "")
     
     if google_key or openai_key:
         print("\n📝 Creating .env file with API keys...")
-        env_path = os.path.join(base_path, ".env") if base_path != "." else ".env"
+        # VLMEvalKit specifically looks for .env inside its subdirectory
+        env_dir = "VLMEvalKit" if os.path.exists("VLMEvalKit") else "."
+        env_path = os.path.join(env_dir, ".env")
         env_content = f"""# API Keys for VLMEvalKit
 GOOGLE_API_KEY={google_key}
 OPENAI_API_KEY={openai_key}
 """
         with open(env_path, "w") as f:
             f.write(env_content)
-        print(f"   ✅ .env file created at: {env_path}")
+        print(f"   ✅ .env file created at: {os.path.abspath(env_path)}")
     else:
         print("\n⚠️ No API keys found in environment")
         print("   Set GOOGLE_API_KEY and/or OPENAI_API_KEY before running")
 
-    # 5. Print success message and usage instructions
+    # 6. Print success message and usage instructions
+
     print("\n" + "=" * 60)
     print("🚀 Setup Complete!")
     print("=" * 60)
@@ -84,11 +90,11 @@ OPENAI_API_KEY={openai_key}
     print("\n📋 Example Run Commands:")
     print("\n   Turbo Mode (vLLM):")
     print("   python run.py --data DynaMath --model Qwen2-VL-7B-Instruct \\")
-    print("                 --verbose --judge gpt-4o-mini --use-vllm --reuse")
+    print("                 --verbose --judge gpt-4o-mini --reuse")
     
     print("\n   Alternative (LMDeploy):")
     print("   python run.py --data DynaMath --model Qwen2-VL-7B-Instruct \\")
-    print("                 --verbose --judge gpt-4o-mini --use-lmdeploy --reuse")
+    print("                 --verbose --judge gpt-4o-mini --reuse")
     print("\n" + "=" * 60)
 
 if __name__ == "__main__":
