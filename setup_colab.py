@@ -34,13 +34,20 @@ def main():
         print("   git clone https://github.com/Vasudev08/VLMEvalKit.git")
         return
 
-    # 2. Install VLMEvalKit
+    # 2. Initialize submodule if needed
+    if base_path == "VLMEvalKit" and not os.path.exists(os.path.join(base_path, "setup.py")):
+        print("\n🔄 VLMEvalKit appears to be a submodule. Initializing...")
+        run_command("git submodule update --init --recursive")
+    
+    # 3. Install VLMEvalKit
     print("\n📦 Installing VLMEvalKit...")
     if os.path.exists(os.path.join(base_path, "setup.py")):
         run_command(f"pip install -e {base_path}")
     else:
-        print("⚠️ Warning: setup.py not found, trying editable install anyway...")
-        run_command(f"pip install -e {base_path}")
+        print("❌ Error: setup.py still not found after submodule initialization.")
+        print("   Please check that VLMEvalKit was cloned/initialized correctly.")
+        return
+
 
     # 3. Optional: Install Flash Attention (may fail on some systems)
     print("\n📦 Installing Flash Attention (optional, may fail)...")
