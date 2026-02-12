@@ -1,5 +1,5 @@
 
-# Colab Setup Script for VLMEvalKit
+# Colab Setup Script for VLMEvalKit (Simplified)
 # Usage:
 # 1. Copy the content of this file to a Colab cell.
 # 2. Run the cell.
@@ -7,10 +7,9 @@
 
 import os
 import subprocess
-import sys
-import shutil
 
 def run_command(command):
+    """Run a shell command and handle errors gracefully."""
     print(f"Running: {command}")
     try:
         subprocess.check_call(command, shell=True)
@@ -18,67 +17,77 @@ def run_command(command):
         print(f"⚠️ Warning: Command failed: {e}")
 
 def main():
-    print("--- Setting up VLMEvalKit in Colab ---")
-    print(f"📍 Current Working Directory: {os.getcwd()}")
+    print("=" * 60)
+    print("Setting up VLMEvalKit in Colab")
+    print("=" * 60)
+    print(f"\n📍 Current Working Directory: {os.getcwd()}\n")
 
-    # 1. Handle Submodule vs Standalone
-    vlm_path = "VLMEvalKit"
-    if os.path.exists(vlm_path):
-        print(f"📂 Found {vlm_path}. Flattening to root for easier access...")
-        # Move contents of VLMEvalKit to current root
-        for item in os.listdir(vlm_path):
-            if item in ['.git', '.github']: 
-                continue  # Skip git metadata
-            s = os.path.join(vlm_path, item)
-            d = os.path.join(".", item)
-            if os.path.isdir(s):
-                if os.path.exists(d) and not os.path.islink(d):
-                    shutil.rmtree(d)
-                shutil.copytree(s, d, dirs_exist_ok=True)
-            else:
-                shutil.copy2(s, d)
-        print("✅ Directory flattened.")
+    # 1. Check if VLMEvalKit exists as subdirectory or if we're already in it
+    if os.path.exists("VLMEvalKit"):
+        print("✅ Found VLMEvalKit subdirectory")
+        base_path = "VLMEvalKit"
+    elif os.path.exists("vlmeval"):
+        print("✅ Already in VLMEvalKit directory")
+        base_path = "."
     else:
-        print(f"🔗 {vlm_path} not found. Checking if we are already in the flattened root...")
-        if not os.path.exists("setup.py"):
-            print("❌ Error: setup.py not found in root. Initializing via submodule...")
-            run_command("git submodule update --init --recursive")
-            # Re-run if submodule was initialized
-            if os.path.exists(vlm_path):
-                print("\n⚠️ Submodule initialized. Please re-run this script.")
-                return
+        print("❌ Error: VLMEvalKit not found. Please clone the repository first:")
+        print("   git clone https://github.com/Vasudev08/VLMEvalKit.git")
+        return
 
-    # 2. Install dependencies
-    print("\n📦 Installing VLMEvalKit and dependencies...")
-    if os.path.exists("setup.py") or os.path.exists("pyproject.toml"):
-        run_command("pip install -e .")
+    # 2. Install VLMEvalKit
+    print("\n📦 Installing VLMEvalKit...")
+    if os.path.exists(os.path.join(base_path, "setup.py")):
+        run_command(f"pip install -e {base_path}")
     else:
-        print("⚠️ Warning: No setup.py found in root. Installing from VLMEvalKit subdirectory...")
-        run_command("pip install -e VLMEvalKit")
+        print("⚠️ Warning: setup.py not found, trying pip install anyway...")
+        run_command(f"pip install {base_path}")
 
+    # 3. Install performance backends
     print("\n📦 Installing performance backends (vLLM, LMDeploy)...")
-    run_command("pip install vllm>=0.6.3 lmdeploy decord flash-attn --no-build-isolation")
-    run_command("pip install qwen-vl-utils")
+    run_command("pip install vllm>=0.6.3 --no-build-isolation")
+    run_command("pip install lmdeploy")
+    run_command("pip install qwen-vl-utils decord")
+    
+    # Flash attention is optional and may fail on some systems
+    print("\n📦 Installing Flash Attention (optional, may fail)...")
+    run_command("pip install flash-attn --no-build-isolation || echo 'Flash Attention install failed, continuing anyway'")
 
-    # 3. Create .env file
+    # 4. Create .env file
     google_key = os.environ.get("GOOGLE_API_KEY", "")
     openai_key = os.environ.get("OPENAI_API_KEY", "")
     
-    print("\n📝 Creating .env file...")
-    env_content = f"""# API Keys for VLMEvalKit
+    if google_key or openai_key:
+        print("\n📝 Creating .env file with API keys...")
+        env_path = os.path.join(base_path, ".env") if base_path != "." else ".env"
+        env_content = f"""# API Keys for VLMEvalKit
 GOOGLE_API_KEY={google_key}
 OPENAI_API_KEY={openai_key}
 """
-    with open(".env", "w") as f:
-        f.write(env_content)
+        with open(env_path, "w") as f:
+            f.write(env_content)
+        print(f"   ✅ .env file created at: {env_path}")
+    else:
+        print("\n⚠️ No API keys found in environment")
+        print("   Set GOOGLE_API_KEY and/or OPENAI_API_KEY before running")
 
-    print("\n🚀 Setup Complete!")
-    print("----------------------------------------------------------------")
-    print("Recommended Run Command (Turbo Mode):")
-    print("python run.py --data DynaMath --model Qwen2-VL-7B-Instruct --verbose --judge gpt-4o-mini --use-vllm --reuse")
-    print("\nAlternative (LMDeploy):")
-    print("python run.py --data DynaMath --model Qwen2-VL-7B-Instruct --verbose --judge gpt-4o-mini --use-lmdeploy --reuse")
-    print("----------------------------------------------------------------")
+    # 5. Print success message and usage instructions
+    print("\n" + "=" * 60)
+    print("🚀 Setup Complete!")
+    print("=" * 60)
+    
+    if base_path != ".":
+        print(f"\n💡 Change to VLMEvalKit directory:")
+        print(f"   %cd {base_path}")
+    
+    print("\n📋 Example Run Commands:")
+    print("\n   Turbo Mode (vLLM):")
+    print("   python run.py --data DynaMath --model Qwen2-VL-7B-Instruct \\")
+    print("                 --verbose --judge gpt-4o-mini --use-vllm --reuse")
+    
+    print("\n   Alternative (LMDeploy):")
+    print("   python run.py --data DynaMath --model Qwen2-VL-7B-Instruct \\")
+    print("                 --verbose --judge gpt-4o-mini --use-lmdeploy --reuse")
+    print("\n" + "=" * 60)
 
 if __name__ == "__main__":
     main()
