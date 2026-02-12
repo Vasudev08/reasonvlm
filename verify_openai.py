@@ -8,8 +8,35 @@ root_dir = os.path.dirname(script_path)
 vlm_kit_path = os.path.join(root_dir, "VLMEvalKit")
 sys.path.insert(0, vlm_kit_path)
 
+def fix_env_placeholders():
+    env_path = os.path.join(vlm_kit_path, ".env")
+    if os.path.exists(env_path):
+        print(f"Checking for placeholders in {env_path}...")
+        with open(env_path, "r") as f:
+            lines = f.readlines()
+        
+        new_lines = []
+        fixed = False
+        for line in lines:
+            if "<your" in line and "KEY>" in line:
+                fixed = True
+                # Comment out or clear the placeholder line
+                key_name = line.split("=")[0]
+                new_lines.append(f"{key_name}=\n")
+                print(f"  ⚠️ Cleared placeholder for {key_name}")
+            else:
+                new_lines.append(line)
+        
+        if fixed:
+            with open(env_path, "w") as f:
+                f.writelines(new_lines)
+            print("✅ Fixed .env file. VLMEvalKit will no longer override your keys.")
+
 def verify_openai():
-    print("--- 🤖 Verifying OpenAI API Configuration ---")
+    # Fix .env before importing or testing
+    fix_env_placeholders()
+    
+    print("\n--- 🤖 Verifying OpenAI API Configuration ---")
     
     api_key = os.environ.get("OPENAI_API_KEY")
     print(f"Checking Environment Variables:")

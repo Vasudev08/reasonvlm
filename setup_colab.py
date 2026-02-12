@@ -38,9 +38,9 @@ def main():
     if not os.path.exists(env_path):
         print("\n📝 Creating .env file from template...")
         
-        # Try to get keys from environment, or use placeholders
-        google_key = os.environ.get("GOOGLE_API_KEY", "<your GOOGLE_API_KEY>")
-        openai_key = os.environ.get("OPENAI_API_KEY", "<your OPENAI_API_KEY>")
+        # Try to get keys from environment, or use empty strings (placeholders override real keys in VLMEvalKit)
+        google_key = os.environ.get("GOOGLE_API_KEY", "")
+        openai_key = os.environ.get("OPENAI_API_KEY", "")
         
         env_content = f"""# API Keys for VLMEvalKit
 GOOGLE_API_KEY={google_key}
@@ -54,16 +54,15 @@ OPENAI_API_KEY={openai_key}
         print("✅ .env file already exists.")
 
     print("\n🚀 Setup Complete!")
-    print("To ensure your API keys are loaded, run this in the next cell (AS PYTHON CODE, NO '!'):")
+    print("To ensure your API keys are loaded, run this in the next cell (REPLACE WITH YOUR ACTUAL KEYS):")
     print("----------------------------------------------------------------")
     print("# Run this cell to set environment variables")
     print("import os")
-    print(f"os.environ['GOOGLE_API_KEY'] = '{google_key}'")
-    print(f"os.environ['OPENAI_API_KEY'] = '{openai_key}'")
+    print(f"os.environ['OPENAI_API_KEY'] = '{openai_key if openai_key != '<your OPENAI_API_KEY>' else 'PASTE_YOUR_ACTUAL_OPENAI_KEY_HERE'}'")
+    print(f"os.environ['GOOGLE_API_KEY'] = '{google_key if google_key != '<your GOOGLE_API_KEY>' else 'PASTE_YOUR_ACTUAL_GOOGLE_KEY_HERE'}'")
     print("----------------------------------------------------------------")
     print("Then, verify your connection:")
-    print("!python verify_gemini.py  # For Google")
-    print("!python verify_openai.py  # For OpenAI")
+    print("!python verify_openai.py")
     print("----------------------------------------------------------------")
     print("Finally, run your evaluation (gpt-4o-mini is a great cheap judge):")
     print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose --judge gpt-4o-mini")
