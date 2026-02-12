@@ -34,10 +34,9 @@ def main():
     print("\n--- NEXT STEPS ---")
     print("1. Set your OpenAI API Key (if you'll use it as a judge later):")
     print("   import os; os.environ['OPENAI_API_KEY'] = 'your-key-here'")
-    print("\n2. Launch the Model Server:")
-    print("   !lmdeploy serve api_server Qwen/Qwen2-VL-7B-Instruct --server-port 23333 &")
-    print("\n3. Run the Benchmark:")
-    print("   !python DynaMath/evaluation/opensource_json_eval.py")
+    print("\n2. Run the Automated Benchmark (One Click):")
+    print("   !python run_dynamath_official.py")
+    print("\n   (This script handles starting the model server and running the eval automatically)")
     
 if __name__ == "__main__":
     main()
