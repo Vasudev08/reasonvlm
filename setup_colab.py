@@ -39,21 +39,12 @@ def main():
         print("\n📝 Creating .env file from template...")
         
         # Try to get keys from environment, or use placeholders
-        tamus_key = os.environ.get("TAMUS_AI_CHAT_API_KEY", "<your TAMUS_AI_CHAT_API_KEY>")
-        tamus_endpoint = os.environ.get("TAMUS_AI_CHAT_API_ENDPOINT", "https://chat-api.tamu.ai")
+        google_key = os.environ.get("GOOGLE_API_KEY", "<your GOOGLE_API_KEY>")
         
         env_content = f"""# API Keys for VLMEvalKit
-# TAMUS AI Configured for OpenAI API usage in VLMEvalKit
+# Configured for native Google Gemini API support
 
-# VLMEvalKit uses OPENAI_API_BASE and OPENAI_API_KEY
-OPENAI_API_KEY={tamus_key}
-OPENAI_API_BASE={tamus_endpoint}/api/
-
-# Original Variables for reference
-TAMUS_AI_CHAT_API_KEY={tamus_key}
-TAMUS_AI_CHAT_API_ENDPOINT={tamus_endpoint}
-
-GOOGLE_API_KEY=
+GOOGLE_API_KEY={google_key}
 """
         with open(env_path, "w") as f:
             f.write(env_content)
@@ -63,18 +54,18 @@ GOOGLE_API_KEY=
         print("✅ .env file already exists.")
 
     print("\n🚀 Setup Complete!")
-    print("To ensure your API keys are loaded, run this in the next cell (AS PYTHON CODE, NO '!'):")
+    print("To ensure your Gemini API key is loaded, run this in the next cell (AS PYTHON CODE, NO '!'):")
     print("----------------------------------------------------------------")
     print("# Run this cell to set environment variables")
     print("import os")
-    print(f"os.environ['OPENAI_API_KEY'] = '{tamus_key}'")
-    print(f"os.environ['OPENAI_API_BASE'] = '{tamus_endpoint}/api/'")
+    print(f"os.environ['GOOGLE_API_KEY'] = '{google_key}'")
     print("----------------------------------------------------------------")
-    print("Then, verify your API connection and find the cheapest working model:")
-    print("!python verify_api.py")
+    print("Then, verify your Gemini connection:")
+    print("!python verify_gemini.py")
     print("----------------------------------------------------------------")
+    print("Finally, run your evaluation (GeminiFlash2-0 is a good cheap judge):")
     # Note: User changed default model in run_vlm.py to qwen2_vl_7b_instruct and data to DynaMath
-    print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose")
+    print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose --judge GeminiFlash2-0")
 
 if __name__ == "__main__":
     main()
