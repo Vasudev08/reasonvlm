@@ -1,0 +1,3 @@
+[submodule "VLMEvalKit"]
+	path = VLMEvalKit
+	url = https://github.com/Vasudev08/VLMEvalKit.git
