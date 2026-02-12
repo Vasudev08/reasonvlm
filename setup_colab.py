@@ -65,7 +65,7 @@ OPENAI_API_KEY={openai_key}
     print("!python verify_openai.py")
     print("----------------------------------------------------------------")
     print("Finally, run your evaluation (gpt-4o-mini is a great cheap judge):")
-    print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose --judge gpt-4o-mini")
+    print("python VLMEvalKit/run.py --data DynaMath --model Qwen2-VL-7B-Instruct --verbose --judge gpt-4o-mini")
 
 if __name__ == "__main__":
     main()
