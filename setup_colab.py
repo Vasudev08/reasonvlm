@@ -47,7 +47,7 @@ def main():
 
 # VLMEvalKit uses OPENAI_API_BASE and OPENAI_API_KEY
 OPENAI_API_KEY={tamus_key}
-OPENAI_API_BASE={tamus_endpoint}/v1/
+OPENAI_API_BASE={tamus_endpoint}/api/
 
 # Original Variables for reference
 TAMUS_AI_CHAT_API_KEY={tamus_key}
@@ -63,14 +63,16 @@ GOOGLE_API_KEY=
         print("✅ .env file already exists.")
 
     print("\n🚀 Setup Complete!")
-    print("To ensure your API keys are loaded, run this in the next cell:")
+    print("To ensure your API keys are loaded, run this in the next cell (AS PYTHON CODE, NO '!'):")
     print("----------------------------------------------------------------")
+    print("# Run this cell to set environment variables")
     print("import os")
     print(f"os.environ['OPENAI_API_KEY'] = '{tamus_key}'")
-    print(f"os.environ['OPENAI_API_BASE'] = '{tamus_endpoint}/v1/'")
+    print(f"os.environ['OPENAI_API_BASE'] = '{tamus_endpoint}/api/'")
     print("----------------------------------------------------------------")
-    print("Then run your evaluation:")
-    # print("python VLMEvalKit/run.py --data MMBench_DEV_EN --model qwen_chat --verbose")
+    print("Then, verify your API connection and find the cheapest working model:")
+    print("!python verify_api.py")
+    print("----------------------------------------------------------------")
     # Note: User changed default model in run_vlm.py to qwen2_vl_7b_instruct and data to DynaMath
     print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose")
 
