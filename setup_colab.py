@@ -40,11 +40,11 @@ def main():
         
         # Try to get keys from environment, or use placeholders
         google_key = os.environ.get("GOOGLE_API_KEY", "<your GOOGLE_API_KEY>")
+        openai_key = os.environ.get("OPENAI_API_KEY", "<your OPENAI_API_KEY>")
         
         env_content = f"""# API Keys for VLMEvalKit
-# Configured for native Google Gemini API support
-
 GOOGLE_API_KEY={google_key}
+OPENAI_API_KEY={openai_key}
 """
         with open(env_path, "w") as f:
             f.write(env_content)
@@ -54,18 +54,19 @@ GOOGLE_API_KEY={google_key}
         print("✅ .env file already exists.")
 
     print("\n🚀 Setup Complete!")
-    print("To ensure your Gemini API key is loaded, run this in the next cell (AS PYTHON CODE, NO '!'):")
+    print("To ensure your API keys are loaded, run this in the next cell (AS PYTHON CODE, NO '!'):")
     print("----------------------------------------------------------------")
     print("# Run this cell to set environment variables")
     print("import os")
     print(f"os.environ['GOOGLE_API_KEY'] = '{google_key}'")
+    print(f"os.environ['OPENAI_API_KEY'] = '{openai_key}'")
     print("----------------------------------------------------------------")
-    print("Then, verify your Gemini connection:")
-    print("!python verify_gemini.py")
+    print("Then, verify your connection:")
+    print("!python verify_gemini.py  # For Google")
+    print("!python verify_openai.py  # For OpenAI")
     print("----------------------------------------------------------------")
-    print("Finally, run your evaluation (GeminiFlashLite2-0 is a great cheap judge):")
-    # Note: User changed default model in run_vlm.py to qwen2_vl_7b_instruct and data to DynaMath
-    print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose --judge GeminiFlashLite2-0")
+    print("Finally, run your evaluation (gpt-4o-mini is a great cheap judge):")
+    print("python VLMEvalKit/run.py --data DynaMath --model qwen2_vl_7b_instruct --verbose --judge gpt-4o-mini")
 
 if __name__ == "__main__":
     main()
