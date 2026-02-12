@@ -57,6 +57,7 @@ def apply_patches(base_path="."):
 
 def main():
     print("--- Setting up VLMEvalKit in Colab (Optimized & Flat) ---")
+    print(f"📍 Current Working Directory: {os.getcwd()}")
 
     # 1. Handle Submodule vs Standalone
     vlm_path = "VLMEvalKit"
@@ -64,28 +65,36 @@ def main():
         print(f"📂 Found {vlm_path}. Flattening to root for easier access...")
         # Move contents of VLMEvalKit to current root
         for item in os.listdir(vlm_path):
+            if item in ['.git', '.github']: continue # Skip git metadata
             s = os.path.join(vlm_path, item)
             d = os.path.join(".", item)
             if os.path.isdir(s):
-                if os.path.exists(d):
+                if os.path.exists(d) and not os.path.islink(d):
                     shutil.rmtree(d)
-                shutil.copytree(s, d)
+                shutil.copytree(s, d, dirs_exist_ok=True)
             else:
                 shutil.copy2(s, d)
         print("✅ Directory flattened.")
     else:
-        print("🔗 VLMEvalKit directory not found. Initializing via submodule...")
-        run_command("git submodule update --init --recursive")
-        # Retry flattening
-        if os.path.exists(vlm_path):
-            return main() # Restart with flattening
+        print(f"🔗 {vlm_path} not found. checking if we are already in the flattened root...")
+        if not os.path.exists("setup.py"):
+            print("❌ Error: setup.py not found in root. Initializing via submodule...")
+            run_command("git submodule update --init --recursive")
+            # Flatten after init
+            if os.path.exists(vlm_path):
+                return main()
 
     # 2. Apply Patches (Now at root)
     apply_patches(".")
 
     # 3. Install dependencies
     print("\n📦 Installing performance backends (vLLM, LMDeploy)...")
-    run_command("pip install -e .")
+    if os.path.exists("setup.py") or os.path.exists("pyproject.toml"):
+        run_command("pip install -e .")
+    else:
+        print("⚠️ Warning: No setup.py found in root. Installing from VLMEvalKit subdirectory...")
+        run_command("pip install -e VLMEvalKit")
+
     run_command("pip install vllm>=0.6.3 lmdeploy decord flash-attn --no-build-isolation")
     run_command("pip install qwen-vl-utils")
 
