@@ -238,7 +238,11 @@ def parse_dsg_json(response_text):
         # Fallback: just return the raw text if parsing fails
         return response_text, ""
 
-def get_final_dsg_response(api_key, conditioning_text, final_question_text, image_input, messages_to_append, answer_type="float", verbose=True):
+def get_final_dsg_response(api_key, conditioning_text, final_question_text, image_input, messages_to_append, answer_type="float", local_vlm=None, verbose=True):
+    """
+    Final answer query incorporating the grounded context and VLMEvalKit formatting.
+    If local_vlm is provided (a VLMEvalKit model instance), it uses that for inference.
+    """
     """
     Final answer query incorporating the grounded context and VLMEvalKit formatting.
     """
@@ -260,37 +264,36 @@ def get_final_dsg_response(api_key, conditioning_text, final_question_text, imag
     structured_prompt = (
         f"## Context\n{conditioning_text}\n\n"
         f"## Question\n{final_question_text}\n\n"
-        f"{VLMEVAL_GUIDE.format(INST=inst)}\n"
-        f"{json.dumps(VLMEVAL_EXAMPLE, indent=4)}"
+        f"Please solve the graph problem based on the provided image and context. Use the following JSON format: "
+        f"{{'solution': '[Detailed step-by-step reasoning]', 'short answer': '[Concise Answer]'}}. "
+        f"{inst}\n"
     )
 
-    system_msgs = [
-        {
-            'role': 'system',
-            'content': "You are an accurate math solver. Use the provided grounded context to reason about the image. Output your response in the requested JSON format."
-        }
-    ]
+    if local_vlm is not None:
+        if verbose:
+            print(f"--- Running Local Inference using {type(local_vlm).__name__} ---")
+        
+        # VLMEvalKit models expect list of [image_path, prompt] or similar
+        # Since Image is already loaded, we ensure it handles it correctly.
+        # Most VLMEvalKit models take a list of message/components
+        
+        # We need a temp file for VLMEvalKit generate if it doesn't take PIL directly
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            if isinstance(image_input, Image.Image):
+                image_input.save(tmp.name)
+            else:
+                tmp.write(open(image_input, "rb").read())
+            tmp_path = tmp.name
 
-    full_message_list = system_msgs + messages_to_append + [{
-        "role": "user",
-        "content": [
-            {"type": "text", "text": structured_prompt},
-            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{test_image_b64}"}},
-        ]
-    }]
-
-    payload = {
-        "model": "gpt-4o",
-        "messages": full_message_list,
-        "max_tokens": 1000, # Increased for 'solution' steps
-        "temperature": 0.0
-    }
-
-    resp = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-    if resp.status_code != 200:
-        return {"answer": f"Error: {resp.text}", "solution": ""}
-    
-    raw_response = resp.json()['choices'][0]['message']['content']
+        try:
+            # Standard VLMEvalKit generate call
+            raw_response = local_vlm.generate([tmp_path, structured_prompt])
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+    else:
+        # OpenAI API Fallback (GPT-4o)
     short_answer, solution = parse_dsg_json(raw_response)
     
     if verbose:

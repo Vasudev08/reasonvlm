@@ -71,6 +71,7 @@ def solve_graph_problem(image_input, question_text, answer_type="float", api_key
         image_input=image_input, 
         messages_to_append=messages_to_append,
         answer_type=answer_type,
+        local_vlm=vlm_model,
         verbose=verbose
     )
     
