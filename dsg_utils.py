@@ -294,6 +294,27 @@ def get_final_dsg_response(api_key, conditioning_text, final_question_text, imag
                 os.remove(tmp_path)
     else:
         # OpenAI API Fallback (GPT-4o)
+        payload = {
+            "model": "gpt-4o",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": structured_prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{test_image_b64}"}},
+                    ]
+                }
+            ],
+            "max_tokens": 1000,
+            "temperature": 0.0
+        }
+        resp = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+        if resp.status_code != 200:
+            print(f"Error: {resp.text}")
+            raw_response = "Error during API call."
+        else:
+            raw_response = resp.json()['choices'][0]['message']['content']
+
     short_answer, solution = parse_dsg_json(raw_response)
     
     if verbose:

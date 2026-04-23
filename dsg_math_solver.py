@@ -8,6 +8,7 @@ from dsg_utils import (
     get_final_question,
     get_final_dsg_response
 )
+from viser_utils import apply_viser_scaffolding, get_viser_prompt
 
 # Load environment variables (for OPENAI_API_KEY)
 load_dotenv()
@@ -23,8 +24,7 @@ p(image | concept=math-graph) =
   p(image | axes-limits-and-labels, origin-location-and-grid-increments, curve-type-and-qualitative-shape, precise-coordinates-of-intercepts-and-extrema)
 """
 
-
-def solve_graph_problem(image_input, question_text, answer_type="float", api_key=None, verbose=True):
+def solve_graph_problem(image_input, question_text, answer_type="float", api_key=None, verbose=True, use_viser=False, local_vlm=None):
     """
     Solves a math graph problem using Deep Schema Grounding with a generic DAG.
     
@@ -34,12 +34,21 @@ def solve_graph_problem(image_input, question_text, answer_type="float", api_key
         answer_type: 'float', 'multiple choice', or 'free-form' (matches VLMEvalKit).
         api_key: OpenAI API key (will check environment if None).
         verbose: Print intermediate grounding steps.
+        use_viser: Whether to use VISER (Visual Input Structure for Enhanced Reasoning).
+        local_vlm: Optional local VLM model instance.
     """
     if not api_key:
         api_key = os.getenv("OPENAI_API_KEY")
     
     if not api_key:
         raise ValueError("OpenAI API Key not found. Set OPENAI_API_KEY in .env or pass it as an argument.")
+
+    # 0. Apply VISER if requested
+    if use_viser:
+        if verbose:
+            print("Applying VISER Visual Scaffolding...")
+        image_input = apply_viser_scaffolding(image_input)
+        question_text = get_viser_prompt(question_text)
 
     # 1. Parse the symbolic program
     if verbose:
@@ -71,7 +80,7 @@ def solve_graph_problem(image_input, question_text, answer_type="float", api_key
         image_input=image_input, 
         messages_to_append=messages_to_append,
         answer_type=answer_type,
-        local_vlm=vlm_model,
+        local_vlm=local_vlm,
         verbose=verbose
     )
     
